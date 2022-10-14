@@ -13,21 +13,47 @@
 import stanford.karel.*;
 
 public class MidpointFindingKarel extends SuperKarel {
-
-	private void checkBallAddMove(){
-		while(!beepersPresent()){
-			move();
+	//algorithm is go up twice and go right once
+	//this only works because the world is a square as said in problem
+	public void run(){
+		turnLeft();
+		while(frontIsClear()){
+			goUpTwice();
+			goRight();
 		}
-		pickBeeper();
-		turnAround();
-		move();
+		goDown();
 		putBeeper();
 	}
-
-	private void turnAround(){
-		for(int i = 0; i < 2; i++){
-			turnLeft();
+	
+	//pre: looking north
+	//post: looking south, on the first row
+	private void goDown() {
+		turnAround();
+		while(frontIsClear()){
+			move();
 		}
 	}
-
+	
+	//pre: looking north
+	//post: looking east, up two rows
+	//		may also go up one or zero rows if it's end of the world
+	private void goUpTwice(){
+		checkWallMove();
+		checkWallMove();
+		turnRight();
+	}
+	
+	//pre: looking east
+	//post: looking north, right by one column
+	private void goRight(){
+		checkWallMove();
+		turnLeft();
+	}
+	
+	//checks if there is wall ahead and moves only if there is not
+	private void checkWallMove(){
+		if(frontIsClear()){
+			move();
+		}
+	}
 }

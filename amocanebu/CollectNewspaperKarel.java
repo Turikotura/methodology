@@ -10,7 +10,7 @@
 
 import stanford.karel.*;
 
-public class CollectNewspaperKarel extends Karel {
+public class CollectNewspaperKarel extends SuperKarel {
 
 	public void run() {
 		goToNewspaper();
@@ -18,6 +18,8 @@ public class CollectNewspaperKarel extends Karel {
 		goBack();
 	}
 
+	//pre: top-left corner of house, looking east
+	//post: at newspaper, looking east
 	private void goToNewspaper(){
 		turnRight();
 		move();
@@ -26,7 +28,9 @@ public class CollectNewspaperKarel extends Karel {
 			move();
 		}
 	}
-
+	
+	//pre: at newspaper, looking east
+	//post: top-left corner of house, looking east
 	private void goBack(){
 		turnAround();
 		for(int i = 0; i < 3; i++){
@@ -35,17 +39,5 @@ public class CollectNewspaperKarel extends Karel {
 		turnRight();
 		move();
 		turnRight();
-	}
-
-	private void turnRight(){
-		for(int i = 0; i < 3; i++){
-			turnLeft();
-		}
-	}
-
-	private void turnAround(){
-		for(int i = 0; i < 2; i++){
-			turnLeft();
-		}
 	}
 }
