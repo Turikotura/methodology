@@ -11,7 +11,7 @@
 import stanford.karel.*;
 
 public class StoneMasonKarel extends SuperKarel {
-
+	
 	public void run(){
 		buildColumn();
 		while(frontIsClear()){
@@ -19,18 +19,35 @@ public class StoneMasonKarel extends SuperKarel {
 			buildColumn();
 		}
 	}
-
+	
+	//pre: on first row, 4k+1 column, looking east
+	//post: same as pre, but column built
 	private void buildColumn(){
 		turnLeft();
+		goUpAndPlaceBeepers();
+		goDown();
+	}
+
+	//pre: on first row, 4k+1 column, looking north
+	//post: below a wall on same column, looking north, column built
+	private void goUpAndPlaceBeepers() {
+		checkAndPutBeeper();
+		while(frontIsClear()){
+			move();
+			checkAndPutBeeper();
+		}
+	}
+
+	//same as putBeeper, but checks if beeper is already present
+	private void checkAndPutBeeper() {
 		if(!beepersPresent()){
 			putBeeper();
 		}
-		while(frontIsClear()){
-			move();
-			if(!beepersPresent()){
-				putBeeper();
-			}
-		}
+	}
+
+	//pre: looking north
+	//post: on first row, looking east
+	private void goDown() {
 		turnAround();
 		while(frontIsClear()){
 			move();
@@ -38,22 +55,11 @@ public class StoneMasonKarel extends SuperKarel {
 		turnLeft();
 	}
 
+	//pre: looking east
+	//post: 4 columns ahead, looking east
 	private void moveToNextColumn(){
 		for(int i = 0; i < 4; i++){
 			move();
 		}
 	}
-
-	private void turnRight(){
-		for(int i = 0; i < 3; i++){
-			turnLeft();
-		}
-	}
-
-	private void turnAround(){
-		for(int i = 0; i < 2; i++){
-			turnLeft();
-		}
-	}
-
 }
