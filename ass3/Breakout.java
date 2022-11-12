@@ -25,10 +25,10 @@ public class Breakout extends GraphicsProgram {
 	private static final int PADDLE_Y_OFFSET = 30;
 
 /** Number of bricks per row */
-	private static final int NBRICKS_PER_ROW = 10;
+	private static final int NBRICKS_PER_ROW = 3;
 
 /** Number of rows of bricks */
-	private static final int NBRICK_ROWS = 10;
+	private static final int NBRICK_ROWS = 2;
 
 /** Separation between bricks */
 	private static final int BRICK_SEP = 4;
@@ -92,11 +92,12 @@ public class Breakout extends GraphicsProgram {
 
 	private void moveBall() {
 		GObject obj = checkCollision();
-		if(obj != paddle && obj != null){
+		
+		if(obj!=null && obj.getHeight()==8){
 			totalBricks--;
 			for(int i = 0; i < colors.length; i++){
-				if(colors[i])
-				points += ArrayUtils.indexOf(colors,obj.getColor());
+				//if(colors[i])
+				//points += ArrayUtils.indexOf(colors,obj.getColor());
 			}
 			
 			remove(obj);
@@ -124,33 +125,30 @@ public class Breakout extends GraphicsProgram {
 	private GObject checkCollision() {
 		double x = ball.getX();
 		double y = ball.getY();
-		GObject westObj = getElementAt(x - 1, y + BALL_RADIUS/2);
-		GObject eastObj = getElementAt(x + 1 + BALL_RADIUS, y + BALL_RADIUS/2);
-		GObject northObj = getElementAt(x + BALL_RADIUS/2, y-1);
-		boolean northCheck = (northObj != null && northObj!=paddle) || y < 0;
-		boolean southCheck = getElementAt(x + BALL_RADIUS/2, y + BALL_RADIUS + 1)!=null;
-		boolean westCheck = (westObj != null && westObj!=paddle) || x < 0;
-		boolean eastCheck = (eastObj != null && eastObj!=paddle)|| x + BALL_RADIUS > getWidth();
+		GObject topObject = getElementAt(x+BALL_RADIUS,y);
+		GObject botObject = getElementAt(x+BALL_RADIUS,y+BALL_RADIUS);
+		GObject leftObject = getElementAt(x,y+BALL_RADIUS);
+		GObject rightObject = getElementAt(x+BALL_RADIUS,y+BALL_RADIUS);
+		boolean topCheck = topObject != null || y < 0;
+		boolean botCheck = botObject != null;
+		boolean leftCheck = leftObject != null || x < 0;
+		boolean rightCheck = rightObject != null || x + BALL_RADIUS * 2 > getWidth();
 		boolean loseCheck = y + BALL_RADIUS > getHeight();
-		if(northCheck){
+		if(topCheck || botCheck){
 			bounceClip.play();
 			vy = -vy;
-			return getElementAt(x + BALL_RADIUS/2, y-1);
+			if(topCheck){
+				return topObject;
+			}
+			return botObject;
 		}
-		if(southCheck){
-			bounceClip.play();
-			vy = -vy;
-			return getElementAt(x + BALL_RADIUS/2, y +1 + BALL_RADIUS);
-		}
-		if(westCheck){
+		if(leftCheck || rightCheck){
 			bounceClip.play();
 			vx = -vx;
-			return getElementAt(x-1, y + BALL_RADIUS/2);
-		}
-		if(eastCheck){
-			bounceClip.play();
-			vx = -vx;
-			return getElementAt(x+1 + BALL_RADIUS, y + BALL_RADIUS/2);
+			if(leftCheck){
+				return leftObject;
+			}
+			return rightObject;
 		}
 		if(loseCheck){
 			endGame();
@@ -237,7 +235,6 @@ public class Breakout extends GraphicsProgram {
 		for(int j = 0; j < NBRICKS_PER_ROW; j++){
 			GRect brick = new GRect(BRICK_WIDTH, BRICK_HEIGHT);
 			brick.setFilled(true);
-			println(getWidth());
 			brick.setColor(col);
 			brick.setFillColor(col);
 			int posX = (BRICK_WIDTH+BRICK_SEP)*j+BRICK_SEP;
