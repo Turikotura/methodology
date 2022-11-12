@@ -25,20 +25,20 @@ public class Breakout extends GraphicsProgram {
 	private static final int PADDLE_Y_OFFSET = 30;
 
 /** Number of bricks per row */
-	private static final int NBRICKS_PER_ROW = 3;
+	private static final int NBRICKS_PER_ROW = 6;
 
 /** Number of rows of bricks */
-	private static final int NBRICK_ROWS = 2;
+	private static final int NBRICK_ROWS = 8;
 
 /** Separation between bricks */
 	private static final int BRICK_SEP = 4;
 
 /** Width of a brick */
-	private static final int BRICK_WIDTH = 80;
+	private static final int BRICK_WIDTH = 50;
 
   /** Width and height of application window in pixels */
-	public static final int APPLICATION_WIDTH =  BRICK_WIDTH * NBRICKS_PER_ROW + (NBRICKS_PER_ROW + 1) * BRICK_SEP - 8;
-	public static final int APPLICATION_HEIGHT = 600;
+	public static final int APPLICATION_WIDTH =  BRICK_WIDTH * NBRICKS_PER_ROW + (NBRICKS_PER_ROW + 1) * BRICK_SEP;
+	public static final int APPLICATION_HEIGHT = 620;
 
 /** Dimensions of game board (usually the same) */
 	private static final int WIDTH = APPLICATION_WIDTH;
@@ -51,10 +51,12 @@ public class Breakout extends GraphicsProgram {
 	private static final int BALL_RADIUS = 10;
 
 /** Offset of the top brick row from the top */
-	private static final int BRICK_Y_OFFSET = 70;
+	private static final int BRICK_Y_OFFSET = 90;
 
 /** Number of turns */
 	private static final int NTURNS = 3;
+	
+	private static final int WALL_WIDTH = 20;
 	
 	private static final Color[] colors = {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.CYAN};
 	
@@ -74,6 +76,8 @@ public class Breakout extends GraphicsProgram {
 	GLabel pointsLabel;
 	boolean gameOver = false;
 	boolean startUp = true;
+	GRect[] lifeBlocks = new GRect[3];
+	int lives;
 
 /* Method: run() */
 /** Runs the Breakout program. */
@@ -96,8 +100,11 @@ public class Breakout extends GraphicsProgram {
 		if(obj!=null && obj.getHeight()==8){
 			totalBricks--;
 			for(int i = 0; i < colors.length; i++){
-				//if(colors[i])
-				//points += ArrayUtils.indexOf(colors,obj.getColor());
+				if(colors[i]==obj.getColor()){
+					points += (5-i) * 10;
+					pointsLabel.setLabel("Points: " + points);
+					break;
+				}
 			}
 			
 			remove(obj);
@@ -125,38 +132,61 @@ public class Breakout extends GraphicsProgram {
 	private GObject checkCollision() {
 		double x = ball.getX();
 		double y = ball.getY();
-		GObject topObject = getElementAt(x+BALL_RADIUS,y);
-		GObject botObject = getElementAt(x+BALL_RADIUS,y+BALL_RADIUS);
-		GObject leftObject = getElementAt(x,y+BALL_RADIUS);
-		GObject rightObject = getElementAt(x+BALL_RADIUS,y+BALL_RADIUS);
-		boolean topCheck = topObject != null || y < 0;
-		boolean botCheck = botObject != null;
-		boolean leftCheck = leftObject != null || x < 0;
-		boolean rightCheck = rightObject != null || x + BALL_RADIUS * 2 > getWidth();
+		GObject topObject = getElementAt(x+BALL_RADIUS,y-1);
+		GObject botObject = getElementAt(x+BALL_RADIUS,y+2*BALL_RADIUS+1);
+		GObject leftObject = getElementAt(x-1,y+BALL_RADIUS);
+		GObject rightObject = getElementAt(x+2*BALL_RADIUS+1,y+BALL_RADIUS);
 		boolean loseCheck = y + BALL_RADIUS > getHeight();
-		if(topCheck || botCheck){
+		if(topObject != null){
 			bounceClip.play();
-			vy = -vy;
-			if(topCheck){
-				return topObject;
-			}
+			vy = Math.abs(vy);
+			return topObject;
+		}
+		if(botObject != null){
+			bounceClip.play();
+			vy = -Math.abs(vy);
 			return botObject;
 		}
-		if(leftCheck || rightCheck){
+		if(leftObject != null){
 			bounceClip.play();
-			vx = -vx;
-			if(leftCheck){
-				return leftObject;
-			}
+			vx = Math.abs(vx);
+			return leftObject;
+		}
+		if(rightObject != null){
+			bounceClip.play();
+			vx = -Math.abs(vx);
 			return rightObject;
 		}
 		if(loseCheck){
-			endGame();
 			ball.setLocation(0,0);
 			vx = 0;
 			vy = 0;
+			loseHealth();
 		}
 		return null;
+	}
+
+	private void loseHealth() {
+		lives--;
+		remove(ball);
+		if(lives==2){
+			remove(lifeBlocks[0]);
+		}else if(lives==1){
+			remove(lifeBlocks[1]);
+		}else{
+			remove(lifeBlocks[2]);
+		}
+		if(lives>0){
+			pause(1000);
+			buildBall();
+			vxInit = rgen.nextDouble(1.0,3.0);
+			if(rgen.nextBoolean()==true) vxInit = -vxInit;
+			vx = vxInit;
+			vyInit = 5;
+			vy = vyInit;
+		}else{
+			endGame();
+		}
 	}
 
 	private void endGame() {
@@ -171,14 +201,20 @@ public class Breakout extends GraphicsProgram {
 	}
 
 	private void initializeGame(){
-		buildBricks();
-		buildPaddle();
-		buildBall();
 		if(startUp){
 			pointsLabel = new GLabel("Points: " + points);
-			add(pointsLabel,0,40);
+			add(pointsLabel,5,WALL_WIDTH/2+pointsLabel.getHeight()/3);
+			buildWalls();
+			buildPaddle();
+			
 			startUp = false;
 		}
+		points = 0;
+		lives = 3;
+		addLifeBlocks();
+		totalBricks = NBRICKS_PER_ROW * NBRICK_ROWS;
+		buildBricks();
+		buildBall();
 		vxInit = rgen.nextDouble(1.0,3.0);
 		if(rgen.nextBoolean()==true) vxInit = -vxInit;
 		vx = vxInit;
@@ -186,10 +222,26 @@ public class Breakout extends GraphicsProgram {
 		vy = vyInit;
 	}
 	
+	private void addLifeBlocks(){
+		for(int i = 0; i < 3; i++){
+			println(lifeBlocks[i]);
+			lifeBlocks[i] = new GRect(10,10);
+			println(lifeBlocks[i]);
+			lifeBlocks[i].setFilled(true);
+			lifeBlocks[i].setFillColor(Color.GREEN);
+			add(lifeBlocks[i],WIDTH-15-i*20,WALL_WIDTH/2-5);
+		}
+	}
+	
+	private void addLifeBlock(GRect block, int index){
+		
+	}
+	
 	private void buildBall() {
-		ball = new GOval(BALL_RADIUS, BALL_RADIUS);
+		ball = new GOval(2*BALL_RADIUS, 2*BALL_RADIUS);
 		ball.setFilled(true);
 		ball.setFillColor(Color.BLACK);
+		println(WIDTH/2-BALL_RADIUS/2);
 		add(ball,WIDTH/2-BALL_RADIUS/2, HEIGHT/2-BALL_RADIUS/2);
 	}
 
@@ -207,9 +259,7 @@ public class Breakout extends GraphicsProgram {
 		if(gameOver){
 			remove(text);
 			remove(tryAgain);
-			remove(paddle);
 			initializeGame();
-			totalBricks = NBRICKS_PER_ROW * NBRICK_ROWS;
 			gameOver = false;
 		}
 	}
@@ -224,6 +274,16 @@ public class Breakout extends GraphicsProgram {
 		}
 	}
 	
+	private void buildWalls(){
+		GRect leftWall = new GRect(WALL_WIDTH, HEIGHT);
+		GRect rightWall = new GRect(WALL_WIDTH, HEIGHT);
+		GRect topWall = new GRect(WIDTH, WALL_WIDTH);
+		add(leftWall,-WALL_WIDTH,0);
+		add(rightWall,WIDTH,0);
+		add(topWall,0,0);
+		println(getHeight());
+	}
+	
 	private void buildBricks(){
 		for(int i = 0; i < NBRICK_ROWS; i++){
 			buildRow(i);
@@ -231,7 +291,8 @@ public class Breakout extends GraphicsProgram {
 	}
 
 	private void buildRow(int i) {
-		Color col = colors[i/2];
+		println(NBRICK_ROWS/5);
+		Color col = colors[i/(NBRICK_ROWS/5)];
 		for(int j = 0; j < NBRICKS_PER_ROW; j++){
 			GRect brick = new GRect(BRICK_WIDTH, BRICK_HEIGHT);
 			brick.setFilled(true);
