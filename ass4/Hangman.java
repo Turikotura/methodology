@@ -13,7 +13,7 @@ import java.awt.*;
 
 public class Hangman extends ConsoleProgram {
 	
-	public static final int APPLICATION_WIDTH=800;
+	public static final int APPLICATION_WIDTH=1200;
 	public static final int APPLICATION_HEIGHT=800;
 	
 	private HangmanCanvas canvas;
@@ -30,25 +30,29 @@ public class Hangman extends ConsoleProgram {
 		
 	}
 	public void init() { 
-		canvas = new HangmanCanvas();
-		add(canvas); 
+		canvas = new HangmanCanvas(APPLICATION_WIDTH/2,APPLICATION_HEIGHT);
+		add(canvas);
 	} 
 	private void playOneGame(HangmanLexicon lex, RandomGenerator rand) {
 		String word = lex.getWord(rand.nextInt(lex.getWordCount()));
 		int guesses = 8;
 		boolean[] guessed = new boolean[26];
+		canvas.displayWord(generateCoveredWord(word,guessed));
 		while(guesses!=0){
 			println("The word now looks like this " + generateCoveredWord(word,guessed));
 			println("You have " + guesses + " guesses");
 			char c = readChar();
 			if(word.indexOf(c)==-1){
 				println("There are no such words in the word");
-				canvas.noteIncorrectGuess(c);
+				canvas.incorrectGuess(c);
 				guesses--;
 			}else{
 				println("That guess is correct");
 			}
 			guessed[c-'A']=true;
+			
+			canvas.displayWord(generateCoveredWord(word,guessed));
+			
 			if(guesses==0){
 				println("you a ded nigger");
 				break;
