@@ -7,32 +7,44 @@
 import acm.graphics.*;
 
 public class HangmanCanvas extends GCanvas {
-
 	int step = 0;
 	int width;
 	int height;
 	GLabel wordLabel;
+	GLabel wrongGuessesLabel;
+	String wrongGuesses;
 	int y = 0;
 	int x = 0;
 	public HangmanCanvas(int w, int h){
-		width = w;
-		height = h;
-		x = width/2-BEAM_LENGTH;
-		y = height/2-SCAFFOLD_HEIGHT/2;
-		add(new GLine(x,y,x,y+SCAFFOLD_HEIGHT));
-		add(new GLine(x,y,width/2,y));
-		add(new GLine(width/2,y,width/2,y+ROPE_LENGTH));
-		y+=ROPE_LENGTH;
-		x=width/2;
-		
-		wordLabel = new GLabel("");
-		wordLabel.setFont("*-*-30");
-		add(wordLabel,width/6,height*6/7);
+		reset(w,h);
 	}
 	
 /** Resets the display so that only the scaffold appears */
-	public void reset() {
-		/* You fill this in */
+	public void reset(int w, int h) {
+		removeAll();
+		
+		step = 0;
+		width = w;
+		height = h;
+		// variables that make it easier to position hangman
+		x = width/2-BEAM_LENGTH;
+		y = height/2-SCAFFOLD_HEIGHT/2;
+		// scaffold
+		add(new GLine(x,y,x,y+SCAFFOLD_HEIGHT));
+		add(new GLine(x,y,width/2,y));
+		add(new GLine(width/2,y,width/2,y+ROPE_LENGTH));
+		
+		y+=ROPE_LENGTH;
+		x=width/2;
+		// add empty word label
+		wordLabel = new GLabel("");
+		wordLabel.setFont("*-*-30");
+		add(wordLabel,width/6,height*5/6); // positions are random numbers that seemed nice
+		// add empty wrong guesses label
+		wrongGuesses = "";
+		wrongGuessesLabel = new GLabel("");
+		wrongGuessesLabel.setFont("*-*-20");
+		add(wrongGuessesLabel,width/6,height*8/9); // here too
 	}
 
 /**
@@ -50,7 +62,12 @@ public class HangmanCanvas extends GCanvas {
  * on the scaffold and adds the letter to the list of incorrect
  * guesses that appears at the bottom of the window.
  */
-	public void incorrectGuess(char letter) {
+	public void noteIncorrectGuess(char letter, boolean[] guessed) {
+		// check if letter is already guessed
+		if(guessed[letter-'A']==false){
+			wrongGuesses += letter;
+			wrongGuessesLabel.setLabel(wrongGuesses);
+		}
 		switch(step){
 			case 0:
 				step0();
@@ -64,7 +81,6 @@ public class HangmanCanvas extends GCanvas {
 			case 3:
 				step3();
 				break;
-				
 			case 4:
 				step4();
 				break;
@@ -79,21 +95,21 @@ public class HangmanCanvas extends GCanvas {
 				break;
 		}
 		step++;
-		
 	}
-
+	
+	//head
 	//pre-condition: y is pointed at rope's lower end, x is middle of canvas
 	public void step0(){
 		GOval head = new GOval(HEAD_RADIUS*2,HEAD_RADIUS*2);
 		add(head,x-HEAD_RADIUS,y);
 		y+=HEAD_RADIUS*2;
 	}
-	
+	//body
 	//pre-condition: y is pointed at head's lower end, x is middle of canvas
 	public void step1(){
 		add(new GLine(x,y,x,y+BODY_LENGTH));
 	}
-	
+	//left arm
 	//pre-condition: y is pointed at head's lower end, x is middle of canvas
 	public void step2(){
 		int yArm = y+ARM_OFFSET_FROM_HEAD;
@@ -101,7 +117,7 @@ public class HangmanCanvas extends GCanvas {
 		add(new GLine(x,yArm,xArmEnd,yArm));
 		add(new GLine(xArmEnd,yArm,xArmEnd,yArm+LOWER_ARM_LENGTH));
 	}
-	
+	//right arm
 	//pre-condition: y is pointed at head's lower end, x is middle of canvas
 	public void step3(){
 		int yArm = y+ARM_OFFSET_FROM_HEAD;
@@ -109,7 +125,7 @@ public class HangmanCanvas extends GCanvas {
 		add(new GLine(x,yArm,xArmEnd,yArm));
 		add(new GLine(xArmEnd,yArm,xArmEnd,yArm+LOWER_ARM_LENGTH));
 	}
-	
+	//left leg
 	//pre-condition: y is pointed at head's lower end, x is middle of canvas
 	public void step4(){
 		y+=BODY_LENGTH;
@@ -117,21 +133,21 @@ public class HangmanCanvas extends GCanvas {
 		add(new GLine(x,y,xHipEnd,y));
 		add(new GLine(xHipEnd,y,xHipEnd,y+LEG_LENGTH));
 	}
-	
+	//right leg
 	//pre-condition: y is pointed at body's lower end, x is middle of canvas
 	public void step5(){
 		int xHipEnd = x+HIP_WIDTH;
 		add(new GLine(x,y,xHipEnd,y));
 		add(new GLine(xHipEnd,y,xHipEnd,y+LEG_LENGTH));
 	}
-	
+	//left foot
 	//pre-condition: y is pointed at body's lower end, x is middle of canvas
 	public void step6(){
 		y+=LEG_LENGTH;
 		int xFootStart = x-HIP_WIDTH;
 		add(new GLine(xFootStart,y,xFootStart-FOOT_LENGTH,y));
 	}
-	
+	//right foot
 	//pre-condition: y is pointed at foot's height, x is middle of canvas
 	public void step7(){
 		int xFootStart = x+HIP_WIDTH;
